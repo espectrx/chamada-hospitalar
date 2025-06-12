@@ -364,14 +364,14 @@ def criar_dados_iniciais():
 
                 db.session.commit()
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    host = '0.0.0.0'  # necessário para Render
+# if __name__ == '__main__':
+#     port = int(os.environ.get("PORT", 5000))
+#     host = '0.0.0.0'  # necessário para Render
 
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-        criar_dados_iniciais()
+#     with app.app_context():
+#         db.drop_all()
+#         db.create_all()
+#         criar_dados_iniciais()
 
-    socketio.run(app, host=host, port=port)
+#     socketio.run(app, host=host, port=port)
     
