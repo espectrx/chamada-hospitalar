@@ -375,4 +375,6 @@ if __name__ == '__main__':
         db.create_all()
         # Cria os servidores e usuários iniciais
         criar_dados_iniciais()
-    socketio.run(app, host=args.host, port=5000, debug=True, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port)
+    
