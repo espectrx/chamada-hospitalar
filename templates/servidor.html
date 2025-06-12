@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">
+                    <i class="fas fa-server me-2"></i>
+                    Selecionar Servidor
+                </h3>
+                <p class="text-center text-muted mb-4">
+                    Digite o nome do servidor para conectar ao sistema
+                </p>
+                
+                <form method="POST" action="{{ url_for('selecionar_servidor') }}">
+                    <div class="mb-3">
+                        <label for="servidor" class="form-label">
+                            <i class="fas fa-building me-2"></i>
+                            Nome do Servidor
+                        </label>
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               id="servidor" 
+                               name="servidor" 
+                               placeholder="Ex: Hospital Central, Demo, etc."
+                               required 
+                               autocomplete="off">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Digite exatamente o nome do servidor fornecido pelo administrador
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plug me-2"></i>
+                            Conectar ao Servidor
+                        </button>
+                    </div>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-list me-2"></i>
+                        Servidores Disponíveis para Teste
+                    </h6>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CAIS Amendoeiras'">
+                                <i class="fas fa-flask me-1"></i>
+                                CAIS Amendoeiras
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CAIS Cândida de Morais'">
+                                <i class="fas fa-hospital me-1"></i>
+                                CAIS Cândida de Morais
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CAIS Campinas'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                CAIS Campinas
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CAIS Vila Nova'">
+                                <i class="fas fa-ambulance me-1"></i>
+                                CAIS Vila Nova
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CAIS Finsocial'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                CAIS Finsocial
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CAIS Bairro Goiá'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                CAIS Bairro Goiá
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='CIAMS Urias Magalhães'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                CIAMS Urias Magalhães
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='UPA Jardim Novo Mundo'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                UPA Jardim Novo Mundo
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='UPA Noroeste'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                UPA Noroeste
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='UPA Chácara do Governador'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                UPA Chácara do Governador
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='UPA Jardim América'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                UPA Jardim América
+                            </button>
+                        </div>
+                             <div class="col-6">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary btn-sm w-100" 
+                                    onclick="document.getElementById('servidor').value='UPA Itaipú'">
+                                <i class="fas fa-clinic-medical me-1"></i>
+                                UPA Itaipú
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-mouse-pointer me-1"></i>
+                        Clique em um dos botões acima para preencher automaticamente
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                <i class="fas fa-shield-alt me-1"></i>
+                Sistema de Chamada Hospitalar - Seleção de Servidor
+            </small>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Foca no campo de entrada quando a página carrega
+    document.getElementById('servidor').focus();
+    
+    // Permite enviar o formulário com Enter
+    document.getElementById('servidor').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.closest('form').submit();
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

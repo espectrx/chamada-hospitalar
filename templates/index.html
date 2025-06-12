@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-hospital me-2"></i>
+                    Sistema de Chamada Hospitalar
+                </h1>
+                
+                <p class="lead mb-4">
+                    Bem-vindo ao sistema de gerenciamento de chamadas do hospital.
+                    Faça login para acessar o sistema.
+                </p>
+                
+                <div class="d-grid gap-3 col-md-6 mx-auto">
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Fazer Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

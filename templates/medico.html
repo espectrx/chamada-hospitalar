@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-user-md me-2"></i>
+                    Dr(a). {{ current_user.nome_completo }}
+                </h4>
+
+
+                <form action="{{ url_for('editar_perfil') }}" method="POST" class="mb-4">
+                    <div class="mb-3">
+                        <label for="nome_completo" class="form-label">Nome do Profissional</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="nome_completo" name="nome_completo" required>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            Atualizar Nome
+                        </button>
+                    </div>
+                </form>
+
+                <hr>
+
+                <form id="salaForm" class="mb-4">
+                    <div class="mb-3">
+                        <label for="sala" class="form-label">Nome da Sala</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-door-open"></i>
+                            </span>
+                            <input type="text" class="form-control" id="sala" placeholder="Ex: SALA 5" required>
+                        </div>
+                    </div>
+                </form>
+
+                <hr>
+
+                <form id="chamadaForm" class="mt-4">
+                    <div class="mb-3">
+                        <label for="paciente" class="form-label">Nome do Paciente</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="paciente" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cor" class="form-label">Cor do Paciente</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-palette"></i>
+                            </span>
+                            <select class="form-select" id="cor" required>
+                                <option value="cinza">Cinza</option>
+                                <option value="vermelho">Vermelho</option>
+                                <option value="laranja">Laranja</option>
+                                <option value="amarelo">Amarelo</option>
+                                <option value="verde">Verde</option>
+                                <option value="azul">Azul</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="chamarBtn">
+                            <i class="fas fa-bell me-2"></i>
+                            Chamar Paciente
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Botões de confirmação (inicialmente ocultos) -->
+                <div id="botoesConfirmacao" class="mt-3" style="display: none;">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success" id="pacienteChegouBtn">
+                            <i class="fas fa-check me-2"></i>
+                            O Paciente Chegou
+                        </button>
+                        <button type="button" class="btn btn-warning" id="chamarNovamenteBtn">
+                            <i class="fas fa-redo me-2"></i>
+                            Chamar Novamente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex flex-column" style="height: 100%; min-height: 100vh;">
+        <div class="card flex-grow-1 d-flex flex-column" style="height: 100%;">
+            <div class="card-body d-flex flex-column" style="height: 100%;">
+                <h4 class="card-title">
+                    <i class="fas fa-comments me-2"></i>
+                    Chat
+                </h4>
+                <div id="chatMensagens" class="chat-mensagens mb-3"></div>
+                <form id="chatForm" class="d-flex">
+                    <input type="text" id="chatInput" class="form-control me-2" placeholder="Digite sua mensagem..." autocomplete="off" required>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">
+                    <i class="fas fa-history me-2"></i>
+                    Últimas Chamadas
+                </h4>
+                <div id="chamadasList" class="list-group mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="assinatura-rodape">Feito por Gustavo P Fontana – IA | UFG</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+    const chamadaForm = document.getElementById('chamadaForm');
+    const salaForm = document.getElementById('salaForm');
+    const chamarBtn = document.getElementById('chamarBtn');
+    const chamadasList = document.getElementById('chamadasList');
+    const botoesConfirmacao = document.getElementById('botoesConfirmacao');
+    const pacienteChegouBtn = document.getElementById('pacienteChegouBtn');
+    const chamarNovamenteBtn = document.getElementById('chamarNovamenteBtn');
+    let ultimasChamadas = [];
+    let ultimoPaciente = null;
+    let ultimaSala = null;
+    let ultimaCor = null;
+
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatMensagens = document.getElementById('chatMensagens');
+
+    // Função para formatar data
+    function formatarData(data) {
+        return new Date(data).toLocaleString('pt-BR');
+    }
+
+    // Função para formatar hora
+    function formatarHora(data) {
+        return new Date(data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Função para criar item de chamada
+    function criarItemChamada(chamada) {
+        const div = document.createElement('div');
+        div.className = 'list-group-item';
+        div.style.borderLeft = `5px solid ${getCorHex(chamada.cor)}`;
+        div.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">${chamada.paciente}</h6>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        ${formatarData(chamada.timestamp)}
+                    </small>
+                </div>
+                <div>
+                    <span class="badge sala-badge" style="background-color: #808080">${chamada.sala}</span>
+                    <span class="badge" style="background-color: ${getCorHex(chamada.cor)}">${chamada.cor}</span>
+                </div>
+            </div>
+        `;
+        return div;
+    }
+
+    // Função para obter o código hexadecimal da cor
+    function getCorHex(cor) {
+        const cores = {
+            'cinza': '#808080',
+            'vermelho': '#B71C1C',
+            'laranja': '#E65100',
+            'amarelo': '#FFD54F',
+            'verde': '#388E3C',
+            'azul': '#1565C0'
+        };
+        return cores[cor] || '#808080';
+    }
+
+    // Função para atualizar a lista de chamadas
+    function atualizarListaChamadas() {
+        chamadasList.innerHTML = '';
+        ultimasChamadas.slice(0, 8).forEach(chamada => {
+            chamadasList.appendChild(criarItemChamada(chamada));
+        });
+    }
+
+    // Atualizar sala
+    salaForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const sala = document.getElementById('sala').value;
+
+        if (!sala) {
+            alert('Por favor, insira o número da sala');
+            return;
+        }
+
+        socket.emit('atualizar_sala', {
+            sala: sala
+        });
+    });
+
+    // Função para chamar paciente
+    document.getElementById('chamadaForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const paciente = document.getElementById('paciente').value;
+        const sala = document.getElementById('sala').value;
+        const cor = document.getElementById('cor').value;
+
+        if (!paciente) {
+            alert('Por favor, insira o nome do paciente');
+            return;
+        }
+        if (!sala) {
+            alert('Por favor, insira o nome da sala');
+            return;
+        }
+
+        // Armazena os dados do último paciente chamado
+        ultimoPaciente = paciente;
+        ultimaSala = sala;
+        ultimaCor = cor;
+
+        socket.emit('chamar_paciente', {
+            paciente: paciente,
+            sala: sala,
+            cor: cor
+        });
+
+        // Mostra os botões de confirmação
+        botoesConfirmacao.style.display = 'block';
+        // Desabilita o botão de chamar
+        chamarBtn.disabled = true;
+    });
+
+    // Função para confirmar chegada do paciente
+    pacienteChegouBtn.addEventListener('click', () => {
+        // Esconde os botões de confirmação
+        botoesConfirmacao.style.display = 'none';
+        // Habilita o botão de chamar
+        chamarBtn.disabled = false;
+        // Limpa o formulário
+        document.getElementById('paciente').value = '';
+    });
+
+    // Função para chamar o paciente novamente
+    chamarNovamenteBtn.addEventListener('click', () => {
+        if (ultimoPaciente && ultimaSala && ultimaCor) {
+            socket.emit('chamar_paciente', {
+                paciente: ultimoPaciente,
+                sala: ultimaSala,
+                cor: ultimaCor
+            });
+        }
+    });
+
+    // Receber confirmação de atualização da sala
+    socket.on('sala_atualizada', (data) => {
+        alert('Sala atualizada com sucesso!');
+    });
+
+    // Receber nova chamada
+    socket.on('nova_chamada', (chamada) => {
+        ultimasChamadas.unshift(chamada);
+        if (ultimasChamadas.length > 8) {
+            ultimasChamadas.pop();
+        }
+        atualizarListaChamadas();
+    });
+
+    // Carregar últimas chamadas ao iniciar
+    socket.on('ultimas_chamadas', (chamadas) => {
+        ultimasChamadas = chamadas;
+        atualizarListaChamadas();
+    });
+
+    function anunciarChamada(chamada) {
+        const audio = document.getElementById('audioSino');
+        if (audio) {
+            // Tenta tocar o áudio e captura possíveis erros de autoplay
+            audio.currentTime = 0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    alert('Clique em qualquer lugar da tela para liberar o áudio das chamadas!');
+                });
+            }
+        }
+        setTimeout(() => {
+            if ('speechSynthesis' in window) {
+                const texto = `${chamada.paciente}, compareça à ${chamada.sala}`;
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'pt-BR';
+                window.speechSynthesis.speak(utterance);
+            }
+        }, 1200); // espera o sino tocar
+    }
+
+    // Enviar mensagem
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const texto = chatInput.value.trim();
+        if (texto) {
+            socket.emit('chat_mensagem', { mensagem: texto });
+            chatInput.value = '';
+        }
+    });
+
+    // Receber mensagem
+    socket.on('chat_mensagem', (msg) => {
+        adicionarMensagemChat(msg);
+    });
+
+    function adicionarMensagemChat(msg) {
+        const div = document.createElement('div');
+        div.className = 'chat-msg mb-2';
+        div.innerHTML = `<b>${msg.nome}</b>: ${msg.mensagem}<br><small class="text-muted">${formatarHora(msg.horario)}</small>`;
+        chatMensagens.appendChild(div);
+        // Limitar a 20 mensagens
+        while (chatMensagens.children.length > 20) {
+            chatMensagens.removeChild(chatMensagens.firstChild);
+        }
+        chatMensagens.scrollTop = chatMensagens.scrollHeight;
+    }
+</script>
+
+<style>
+    .sala-badge {
+        color: #fff;
+        background-color: #808080 !important;
+        margin-right: 8px;
+    }
+
+    .chat-mensagens {
+        font-size: 1.1rem;
+        min-height: 600px;
+        max-height: 600px;
+        height: 400px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-msg b {
+        color: #1976d2;
+    }
+
+    .list-group-item {
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        margin-bottom: 6px;
+        border-radius: 4px;
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .list-group-item .d-flex {
+        width: 100%;
+        align-items: center;
+    }
+    .list-group-item h6 {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 2px;
+        margin-right: 8px;
+        display: inline-block;
+    }
+    .list-group-item small {
+        font-size: 0.95rem;
+        margin-right: 8px;
+    }
+    .sala-badge, .badge {
+        margin-left: 4px;
+        margin-right: 0;
+        padding: 4px 10px;
+        font-size: 0.95rem;
+        border-radius: 8px;
+    }
+    .assinatura-rodape {
+        position: fixed;
+        left: 18px;
+        bottom: 12px;
+        color: #888;
+        font-size: 1.05rem;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        opacity: 0.85;
+        z-index: 9999;
+        letter-spacing: 0.5px;
+    }
+</style>
+{% endblock %}

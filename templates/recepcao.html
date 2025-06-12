@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+        
+                
+                <div id="destaqueUltimo" class="destaque-ultimo mb-4"></div>
+                
+                <div id="filaList" class="list-group mt-3">
+                    <!-- Chamadas serão inseridas aqui via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="audioSino" src="{{ url_for('static', filename='sino.mp3') }}" preload="auto"></audio>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+    const filaList = document.getElementById('filaList');
+    let filaChamadas = [];
+    
+    // Função para formatar data no horário local do navegador
+    function formatarData(data) {
+        return new Date(data).toLocaleString('pt-BR');
+    }
+    
+    // Função para criar item de chamada
+    function criarItemChamada(chamada, isLatest = false) {
+        const div = document.createElement('div');
+        div.className = 'list-group-item';
+        div.style.borderLeft = `5px solid ${getCorHex(chamada.cor)}`;
+        div.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1" style="margin-bottom:2px; text-transform: uppercase;">${chamada.paciente}</h6>
+                    <small class="text-muted">
+                        <i class="fas fa-user-md me-1"></i>
+                        Dr(a). ${chamada.medico}<br>
+                        <i class="fas fa-door-open me-1"></i>
+                        <strong style="text-transform: uppercase;">${chamada.sala}</strong><br>
+                    </small>
+                </div>
+                <div>
+                    <span class="badge cor-badge" style="background-color: ${getCorHex(chamada.cor)}">ㅤㅤㅤ</span>
+                </div>
+            </div>
+        `;
+        return div;
+    }
+    
+    // Função para obter o código hexadecimal da cor
+    function getCorHex(cor) {
+        const cores = {
+            'cinza': '#808080',
+            'vermelho': '#B71C1C',
+            'laranja': '#E65100',
+            'amarelo': '#FFD54F',
+            'verde': '#388E3C',
+            'azul': '#1565C0'
+        };
+        return cores[cor] || '#808080';
+    }
+    
+    // Atualiza a lista de chamadas
+    function atualizarFila() {
+        filaList.innerHTML = '';
+        if (filaChamadas.length > 0) {
+            // Destaca o último chamado
+            const ultimo = filaChamadas[0];
+            document.getElementById('destaqueUltimo').innerHTML = `
+                <div class="ultimo-chamado-box">
+                    <div class="paciente-nome" style="text-transform: uppercase;">${ultimo.paciente}</div>                   
+                    <div class="sala-destaque" style="text-transform: uppercase;">${ultimo.sala}</div>
+                </div>
+            `;
+        } else {
+            document.getElementById('destaqueUltimo').innerHTML = '';
+        }
+        // Lista os demais (exceto o primeiro), até 5 (total 6)
+        filaChamadas.slice(1, 6).forEach((chamada, idx) => {
+            filaList.appendChild(criarItemChamada(chamada, false));
+        });
+    }
+    
+    // Adicionar função para anunciar chamada:
+    function anunciarChamada(chamada) {
+        const audio = document.getElementById('audioSino');
+        if (audio) {
+            audio.currentTime = 0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    // Pode mostrar um aviso se o navegador bloquear o áudio
+                });
+            }
+        }
+        setTimeout(() => {
+            if ('speechSynthesis' in window) {
+                const texto = `${chamada.paciente}, compareça à ${chamada.sala}`;
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'pt-BR';
+                window.speechSynthesis.speak(utterance);
+            }
+        }, 1200); // espera o sino tocar
+    }
+    
+    // Receber nova chamada
+    socket.on('nova_chamada', (chamada) => {
+        filaChamadas.unshift(chamada);
+        // Limita a lista a 6 chamados
+        filaChamadas = filaChamadas.slice(0, 6);
+        atualizarFila();
+        anunciarChamada(chamada); // Garante o anúncio de voz
+    });
+    
+    // Receber lista inicial de chamadas (se houver)
+    socket.on('fila_atual', (chamadas) => {
+        filaChamadas = chamadas;
+        atualizarFila();
+    });
+</script>
+
+<style>
+    .latest-call {
+        background: #e3f2fd !important;
+    }
+    
+    .latest-patient {
+        font-weight: bold;
+        color: #1976d2;
+    }
+    
+    .list-group-item {
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+        margin-bottom: 8px;
+        border-radius: 4px;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+
+    .cor-badge {
+        width: 40px;
+        min-width: 40px;
+        display: inline-block;
+        color: transparent;
+        border-radius: 12px;
+        margin-left: 8px;
+    }
+
+    .destaque-ultimo {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .ultimo-chamado-box {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        padding: 36px 56px 28px 56px;
+        margin-bottom: 8px;
+        text-align: center;
+        min-width: 60%;
+        font-size: 2.4rem;
+    }
+    .paciente-nome {
+        font-size: 3.6rem;
+        font-weight: bold;
+        color: #B71C1C;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 8px #eee;
+    }
+    .sala-destaque {
+        font-size: 2.2rem;
+        color: #011225;
+        font-weight: bold;
+        margin-bottom: 0;
+        letter-spacing: 0.5px;
+    }
+    .list-group-item h6 {
+        font-size: 2.1rem;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+    .list-group-item small {
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %} 
