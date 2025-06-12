@@ -365,16 +365,13 @@ def criar_dados_iniciais():
                 db.session.commit()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--host', default='127.0.0.1', help='Host para iniciar o servidor')
-    args = parser.parse_args()
-    with app.app_context():
-        # Remove todas as tabelas existentes
-        db.drop_all()
-        # Cria todas as tabelas novamente
-        db.create_all()
-        # Cria os servidores e usuários iniciais
-        criar_dados_iniciais()
     port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host="0.0.0.0", port=port)
+    host = '0.0.0.0'  # necessário para Render
+
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        criar_dados_iniciais()
+
+    socketio.run(app, host=host, port=port)
     
